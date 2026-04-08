@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/MrBuryy/subscriptions-service/internal/model"
 	"github.com/MrBuryy/subscriptions-service/internal/repository"
@@ -202,6 +201,29 @@ func (r *SubscriptionRepository) Update(ctx context.Context, sub *model.Subscrip
 			return repository.ErrNotFound
 		}
 		return err
+	}
+
+	return nil
+}
+
+func (r *SubscriptionRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	query := `
+		DELETE FROM subscriptions
+		WHERE id = $1;
+	`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return repository.ErrNotFound
 	}
 
 	return nil
