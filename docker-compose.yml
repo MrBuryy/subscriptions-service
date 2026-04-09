@@ -1,7 +1,6 @@
 services:
   postgres:
-    image: postgres:17-alpine
-    container_name: subscriptions-postgres
+    image: postgres:15-alpine
     environment:
       POSTGRES_DB: subscriptions
       POSTGRES_USER: postgres
@@ -10,7 +9,15 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+
+  app:
+    build: .
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
