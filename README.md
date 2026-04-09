@@ -36,11 +36,11 @@ REST-сервис для управления и агрегации данных
 
 | Метод | Endpoint | Описание |
 |------|----------|----------|
-| POST   | `/subscriptions`        | создать подписку |
-| GET    | `/subscriptions`        | список (фильтры + пагинация) |
-| GET    | `/subscriptions/{id}`   | получить по ID |
-| PUT    | `/subscriptions/{id}`   | обновить |
-| DELETE | `/subscriptions/{id}`   | удалить |
+| POST   | `/subscriptions`      | создать подписку |
+| GET    | `/subscriptions`      | список (фильтры + пагинация) |
+| GET    | `/subscriptions/{id}` | получить по ID |
+| PUT    | `/subscriptions/{id}` | обновить |
+| DELETE | `/subscriptions/{id}` | удалить |
 
 ---
 
@@ -106,6 +106,12 @@ service     → бизнес-логика
 repository  → работа с PostgreSQL
 ```
 
+### Преимущества:
+
+- изоляция бизнес-логики  
+- удобство тестирования  
+- независимость слоёв  
+
 ---
 
 ## Стек технологий
@@ -122,19 +128,34 @@ repository  → работа с PostgreSQL
 
 Используется PostgreSQL.
 
+### Особенности:
+
+- SQL-миграции  
+- UUID через `pgcrypto`  
+- индексы:
+  - `user_id`
+  - `service_name`
+  - `start_date`
+
 ---
 
 ## Работа с датами
 
-- формат `MM-YYYY`
-- хранение в `DATE`
+- в API используется формат `MM-YYYY`  
+- в базе данные хранятся как `DATE`  
+- преобразование выполняется на уровне service  
 
 ---
 
 ## Конфигурация
 
+Конфигурация задаётся через переменные окружения.
+
+### Пример (`.env.example`):
+
 ```env
 HTTP_ADDR=:8080
+
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5433
 POSTGRES_DB=subscriptions
@@ -145,11 +166,41 @@ POSTGRES_SSLMODE=disable
 
 ---
 
-## Запуск через Docker Compose
+## Запуск проекта
+
+### Вариант 1. Локальный запуск
+
+```bash
+docker compose up -d postgres
+```
+
+```bash
+migrate -path ./migrations   -database "postgres://postgres:postgres@localhost:5433/subscriptions?sslmode=disable"   up
+```
+
+```bash
+go run cmd/api/main.go
+```
+
+Сервис будет доступен:
+
+```text
+http://localhost:8080
+```
+
+---
+
+### Вариант 2. Запуск через Docker Compose
 
 ```bash
 docker compose up --build
 ```
+
+Команда автоматически:
+
+- поднимает PostgreSQL  
+- применяет миграции  
+- собирает и запускает API-сервис  
 
 ---
 
@@ -174,7 +225,7 @@ go test ./... -v
 
 ---
 
-## Формат ответа
+## Формат ответа API
 
 ```json
 {
@@ -182,7 +233,11 @@ go test ./... -v
   "error": null
 }
 ```
+
+---
+
 ## Примечания
-- управление пользователями не входит в зону ответственности сервиса
-- стоимость подписки хранится как целое число рублей
-- копейки не учитываются
+
+- управление пользователями не входит в зону ответственности сервиса  
+- стоимость подписки хранится как целое число рублей  
+- копейки не учитываются  
