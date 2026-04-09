@@ -76,7 +76,7 @@ func NewSubscriptionHandler(service SubscriptionService) *SubscriptionHandler {
 // @Success 201 {object} dto.SubscriptionResponseEnvelope
 // @Failure 400 {object} dto.ErrorResponseEnvelope
 // @Failure 500 {object} dto.ErrorResponseEnvelope
-// @Router /subscriptions/ [post]
+// @Router /subscriptions [post]
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateSubscriptionRequest
 
@@ -186,7 +186,7 @@ func (h *SubscriptionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.SubscriptionListResponseEnvelope
 // @Failure 400 {object} dto.ErrorResponseEnvelope
 // @Failure 500 {object} dto.ErrorResponseEnvelope
-// @Router /subscriptions/ [get]
+// @Router /subscriptions [get]
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 

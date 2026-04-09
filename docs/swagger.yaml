@@ -98,7 +98,6 @@ definitions:
       user_id:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: REST service for managing user subscriptions
@@ -117,7 +116,7 @@ paths:
       summary: Health check
       tags:
       - health
-  /subscriptions/:
+  /subscriptions:
     get:
       parameters:
       - description: Filter by user ID

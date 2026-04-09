@@ -130,7 +130,7 @@ func newRouter(subHandler *handler.SubscriptionHandler) http.Handler {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+		httpSwagger.URL("/swagger/doc.json"),
 	))
 
 
