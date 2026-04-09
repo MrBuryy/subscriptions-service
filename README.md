@@ -1,190 +1,81 @@
-Subscriptions Service API
+# Subscriptions Service API
 
-Тестовое задание на позицию Junior Golang Developer (Effective Mobile)
+Тестовое задание на позицию **Junior Golang Developer (Effective Mobile)**
 
-Описание
+---
+
+## Описание
 
 REST-сервис для управления и агрегации данных об онлайн-подписках пользователей.
 
 Сервис позволяет:
 
-создавать, получать, обновлять и удалять подписки
-получать список подписок с фильтрацией и пагинацией
-рассчитывать суммарную стоимость подписок за выбранный период
-Функционал
-Подписки (CRUDL)
+- создавать, получать, обновлять и удалять подписки  
+- получать список подписок с фильтрацией и пагинацией  
+- рассчитывать суммарную стоимость подписок за выбранный период  
+
+---
+
+## Функционал
+
+### Подписки (CRUDL)
 
 Каждая подписка содержит:
 
-Поле	Описание
-service_name	название сервиса
-price	стоимость в рублях (целое число)
-user_id	UUID пользователя
-start_date	дата начала (MM-YYYY)
-end_date	дата окончания (MM-YYYY, опционально)
-API методы
-Метод	Endpoint	Описание
-POST	/subscriptions	создать подписку
-GET	/subscriptions	список (фильтры + пагинация)
-GET	/subscriptions/{id}	получить по ID
-PUT	/subscriptions/{id}	обновить
-DELETE	/subscriptions/{id}	удалить
-Агрегация (Summary)
+| Поле           | Описание                                |
+|----------------|-----------------------------------------|
+| `service_name` | название сервиса                        |
+| `price`        | стоимость в рублях (целое число)        |
+| `user_id`      | UUID пользователя                       |
+| `start_date`   | дата начала (`MM-YYYY`)                 |
+| `end_date`     | дата окончания (`MM-YYYY`, опционально) |
 
-Endpoint:
+---
 
+### API методы
+
+| Метод | Endpoint | Описание |
+|------|----------|----------|
+| POST   | `/subscriptions`        | создать подписку |
+| GET    | `/subscriptions`        | список (фильтры + пагинация) |
+| GET    | `/subscriptions/{id}`   | получить по ID |
+| PUT    | `/subscriptions/{id}`   | обновить |
+| DELETE | `/subscriptions/{id}`   | удалить |
+
+---
+
+### Агрегация (Summary)
+
+**Endpoint:**
+
+ text
 GET /subscriptions/summary
+---
 
 Позволяет получить суммарную стоимость подписок за выбранный период.
 
-Поддерживаемые фильтры:
+### Поддерживаемые фильтры:
 
-user_id
-service_name
-Логика расчёта стоимости
+- `user_id`
+- `service_name`
+
+---
+
+## Логика расчёта стоимости
 
 Расчёт основан на пересечении периодов подписки и выбранного диапазона:
 
-учитываются только месяцы внутри выбранного периода
-если end_date отсутствует — подписка считается активной
-расчёт ведётся по количеству месяцев пересечения
-Пример
+- учитываются только месяцы внутри выбранного периода  
+- если `end_date` отсутствует — подписка считается активной  
+- расчёт ведётся по количеству месяцев пересечения  
 
-Подписка:
+---
 
+### Пример
+
+**Подписка:**
+
+```text
 start = 07-2025
 end   = 09-2025
 price = 400
-
-Запрос:
-
-from = 08-2025
-to   = 09-2025
-
-Результат:
-
-2 месяца → 800 рублей
-Архитектура
-
-Проект построен по слоистой архитектуре:
-
-handler     → HTTP слой (DTO, обработка запросов)
-service     → бизнес-логика
-repository  → работа с PostgreSQL
-
-Преимущества:
-
-изоляция бизнес-логики
-удобство тестирования
-независимость слоёв
-Стек технологий
-Go
-Chi
-PostgreSQL
-Docker / Docker Compose
-Swagger (OpenAPI)
-База данных
-
-Используется PostgreSQL.
-
-Особенности:
-
-SQL-миграции
-UUID через pgcrypto
-индексы:
-user_id
-service_name
-start_date
-Работа с датами
-в API используется формат MM-YYYY
-в базе данные хранятся как DATE
-преобразование выполняется на уровне service
-Конфигурация
-
-Конфигурация задаётся через переменные окружения.
-
-Пример (.env.example):
-
-HTTP_ADDR=:8080
-
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5433
-POSTGRES_DB=subscriptions
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_SSLMODE=disable
-Запуск проекта
-Вариант 1. Локальный запуск
-Запустить PostgreSQL:
-docker compose up -d postgres
-Применить миграции:
-migrate -path ./migrations \
-  -database "postgres://postgres:postgres@localhost:5433/subscriptions?sslmode=disable" \
-  up
-Запустить сервис:
-go run cmd/api/main.go
-
-Сервис будет доступен:
-
-http://localhost:8080
-Вариант 2. Запуск через Docker Compose
-
-Для полного запуска проекта:
-
-docker compose up --build
-
-Команда автоматически:
-
-поднимает PostgreSQL
-применяет миграции
-собирает и запускает API-сервис
-
-После запуска сервис доступен по адресу:
-
-http://localhost:8080
-Пример запроса
-Создание подписки
-POST /subscriptions
-Content-Type: application/json
-{
-  "service_name": "Netflix",
-  "price": 999,
-  "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
-  "start_date": "01-2025"
-}
-Тестирование
-
-Проект покрыт тестами:
-
-Слой	Тип
-repository	интеграционные (PostgreSQL)
-service	unit (mock repository)
-handler	HTTP тесты (mock service)
-
-Запуск:
-
-go test ./... -v
-Middleware
-
-Используются стандартные middleware:
-
-RequestID
-Logger
-Recoverer
-RealIP
-Graceful shutdown
-
-Сервис корректно завершает работу:
-
-обрабатывает SIGINT / SIGTERM
-останавливает HTTP сервер
-закрывает соединение с БД
-Формат ответа API
-{
-  "data": {},
-  "error": null
-}
-Примечания
-управление пользователями не входит в зону ответственности сервиса
-стоимость подписки хранится как целое число рублей
-копейки не учитываются
