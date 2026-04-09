@@ -44,13 +44,13 @@ REST-сервис для управления и агрегации данных
 
 ---
 
-### Агрегация (Summary)
+## Агрегация (Summary)
 
 **Endpoint:**
 
- text
+```text
 GET /subscriptions/summary
----
+```
 
 Позволяет получить суммарную стоимость подписок за выбранный период.
 
@@ -79,3 +79,110 @@ GET /subscriptions/summary
 start = 07-2025
 end   = 09-2025
 price = 400
+```
+
+**Запрос:**
+
+```text
+from = 08-2025
+to   = 09-2025
+```
+
+**Результат:**
+
+```text
+2 месяца → 800 рублей
+```
+
+---
+
+## Архитектура
+
+Проект построен по слоистой архитектуре:
+
+```text
+handler     → HTTP слой (DTO, обработка запросов)
+service     → бизнес-логика
+repository  → работа с PostgreSQL
+```
+
+---
+
+## Стек технологий
+
+- Go  
+- Chi  
+- PostgreSQL  
+- Docker / Docker Compose  
+- Swagger (OpenAPI)  
+
+---
+
+## База данных
+
+Используется PostgreSQL.
+
+---
+
+## Работа с датами
+
+- формат `MM-YYYY`
+- хранение в `DATE`
+
+---
+
+## Конфигурация
+
+```env
+HTTP_ADDR=:8080
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5433
+POSTGRES_DB=subscriptions
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_SSLMODE=disable
+```
+
+---
+
+## Запуск через Docker Compose
+
+```bash
+docker compose up --build
+```
+
+---
+
+## Пример запроса
+
+```json
+{
+  "service_name": "Netflix",
+  "price": 999,
+  "user_id": "60601fee-2bf1-4721-ae6f-7636e79a0cba",
+  "start_date": "01-2025"
+}
+```
+
+---
+
+## Тестирование
+
+```bash
+go test ./... -v
+```
+
+---
+
+## Формат ответа
+
+```json
+{
+  "data": {},
+  "error": null
+}
+```
+## Примечания
+- управление пользователями не входит в зону ответственности сервиса
+- стоимость подписки хранится как целое число рублей
+- копейки не учитываются
