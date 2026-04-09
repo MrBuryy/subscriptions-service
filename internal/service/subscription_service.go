@@ -94,3 +94,138 @@ func (s *SubscriptionService) GetByID(ctx context.Context, id string) (*model.Su
 
 	return sub, nil
 }
+func (s *SubscriptionService) List(
+	ctx context.Context,
+	userID *string,
+	serviceName *string,
+	limit int,
+	offset int,
+) ([]model.Subscription, error) {
+	filter := model.SubscriptionFilter{
+		Limit:  limit,
+		Offset: offset,
+	}
+
+	if userID != nil {
+		trimmedUserID := strings.TrimSpace(*userID)
+		parsedUserID, err := uuid.Parse(trimmedUserID)
+		if err != nil {
+			return nil, ErrInvalidUserID
+		}
+		filter.UserID = &parsedUserID
+	}
+
+	if serviceName != nil {
+		trimmedServiceName := strings.TrimSpace(*serviceName)
+		if trimmedServiceName == "" {
+			return nil, ErrInvalidService
+		}
+		filter.ServiceName = &trimmedServiceName
+	}
+
+	if limit <= 0 {
+		filter.Limit = 10
+	}
+
+	if offset < 0 {
+		return nil, ErrInvalidOffset
+	}
+
+	subs, err := s.repo.List(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return subs, nil
+}
+
+func (s *SubscriptionService) Update(
+	ctx context.Context,
+	id string,
+	serviceName string,
+	price int,
+	userID string,
+	startDate string,
+	endDate *string,
+) (*model.Subscription, error) {
+	id = strings.TrimSpace(id)
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, ErrInvalidID
+	}
+
+	serviceName = strings.TrimSpace(serviceName)
+	if serviceName == "" {
+		return nil, ErrInvalidService
+	}
+
+	if price <= 0 {
+		return nil, ErrInvalidPrice
+	}
+
+	userID = strings.TrimSpace(userID)
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, ErrInvalidUserID
+	}
+
+	parsedStartDate, err := ParseMonthYear(startDate)
+	if err != nil {
+		return nil, ErrInvalidStartDate
+	}
+
+	var parsedEndDate *time.Time
+	if endDate != nil {
+		trimmedEndDate := strings.TrimSpace(*endDate)
+		if trimmedEndDate == "" {
+			return nil, ErrInvalidEndDate
+		}
+
+		end, err := ParseMonthYear(trimmedEndDate)
+		if err != nil {
+			return nil, ErrInvalidEndDate
+		}
+
+		if end.Before(parsedStartDate) {
+			return nil, ErrInvalidEndDate
+		}
+
+		parsedEndDate = &end
+	}
+
+	sub := &model.Subscription{
+		ID:          parsedID,
+		ServiceName: serviceName,
+		Price:       price,
+		UserID:      parsedUserID,
+		StartDate:   parsedStartDate,
+		EndDate:     parsedEndDate,
+	}
+
+	if err := s.repo.Update(ctx, sub); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	return sub, nil
+}
+
+func (s *SubscriptionService) Delete(ctx context.Context, id string) error {
+	id = strings.TrimSpace(id)
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return ErrInvalidID
+	}
+
+	if err := s.repo.Delete(ctx, parsedID); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	return nil
+}
