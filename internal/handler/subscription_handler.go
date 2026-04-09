@@ -67,6 +67,16 @@ func NewSubscriptionHandler(service SubscriptionService) *SubscriptionHandler {
 	}
 }
 
+// Create godoc
+// @Summary Create subscription
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateSubscriptionRequest true "Create subscription request"
+// @Success 201 {object} dto.SubscriptionResponseEnvelope
+// @Failure 400 {object} dto.ErrorResponseEnvelope
+// @Failure 500 {object} dto.ErrorResponseEnvelope
+// @Router /subscriptions/ [post]
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateSubscriptionRequest
 
@@ -119,6 +129,16 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusCreated, toSubscriptionResponse(sub))
 }
 
+// GetByID godoc
+// @Summary Get subscription by ID
+// @Tags subscriptions
+// @Produce json
+// @Param id path string true "Subscription ID"
+// @Success 200 {object} dto.SubscriptionResponseEnvelope
+// @Failure 400 {object} dto.ErrorResponseEnvelope
+// @Failure 404 {object} dto.ErrorResponseEnvelope
+// @Failure 500 {object} dto.ErrorResponseEnvelope
+// @Router /subscriptions/{id} [get]
 func (h *SubscriptionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -155,6 +175,18 @@ func (h *SubscriptionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, toSubscriptionResponse(sub))
 }
 
+// List godoc
+// @Summary List subscriptions
+// @Tags subscriptions
+// @Produce json
+// @Param user_id query string false "Filter by user ID"
+// @Param service_name query string false "Filter by service name"
+// @Param limit query int false "Limit"
+// @Param offset query int false "Offset"
+// @Success 200 {object} dto.SubscriptionListResponseEnvelope
+// @Failure 400 {object} dto.ErrorResponseEnvelope
+// @Failure 500 {object} dto.ErrorResponseEnvelope
+// @Router /subscriptions/ [get]
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
@@ -204,6 +236,18 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, toSubscriptionResponses(subs))
 }
 
+// Update godoc
+// @Summary Update subscription
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param id path string true "Subscription ID"
+// @Param request body dto.UpdateSubscriptionRequest true "Update subscription request"
+// @Success 200 {object} dto.SubscriptionResponseEnvelope
+// @Failure 400 {object} dto.ErrorResponseEnvelope
+// @Failure 404 {object} dto.ErrorResponseEnvelope
+// @Failure 500 {object} dto.ErrorResponseEnvelope
+// @Router /subscriptions/{id} [put]
 func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if strings.TrimSpace(id) == "" {
@@ -250,6 +294,16 @@ func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, toSubscriptionResponse(sub))
 }
 
+// Delete godoc
+// @Summary Delete subscription
+// @Tags subscriptions
+// @Produce json
+// @Param id path string true "Subscription ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} dto.ErrorResponseEnvelope
+// @Failure 404 {object} dto.ErrorResponseEnvelope
+// @Failure 500 {object} dto.ErrorResponseEnvelope
+// @Router /subscriptions/{id} [delete]
 func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if strings.TrimSpace(id) == "" {
@@ -273,6 +327,18 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// Summary godoc
+// @Summary Get subscriptions summary
+// @Tags subscriptions
+// @Produce json
+// @Param from query string true "Start period in MM-YYYY format"
+// @Param to query string true "End period in MM-YYYY format"
+// @Param user_id query string false "Filter by user ID"
+// @Param service_name query string false "Filter by service name"
+// @Success 200 {object} dto.SummaryResponseEnvelope
+// @Failure 400 {object} dto.ErrorResponseEnvelope
+// @Failure 500 {object} dto.ErrorResponseEnvelope
+// @Router /subscriptions/summary [get]
 func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 

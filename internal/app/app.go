@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/MrBuryy/subscriptions-service/docs"
 	"github.com/MrBuryy/subscriptions-service/internal/config"
 	"github.com/MrBuryy/subscriptions-service/internal/handler"
 	"github.com/MrBuryy/subscriptions-service/internal/repository/postgres"
@@ -19,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func Run(cfg *config.Config, logger *slog.Logger) error {
@@ -127,11 +129,12 @@ func newRouter(subHandler *handler.SubscriptionHandler) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		handler.WriteJSON(w, http.StatusOK, map[string]string{
-			"message": "ok",
-		})
-	})
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
+
+
+	r.Get("/health", handler.Health)
 
 	r.Route("/subscriptions", func(r chi.Router) {
 		r.Get("/summary", subHandler.Summary)

@@ -1,3 +1,8 @@
+// @title Subscriptions Service API
+// @version 1.0
+// @description REST service for managing user subscriptions
+// @host localhost:8080
+// @BasePath /
 package main
 
 import (
