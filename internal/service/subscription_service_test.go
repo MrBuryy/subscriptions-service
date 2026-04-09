@@ -562,3 +562,167 @@ func TestSubscriptionService_Delete_NotFound(t *testing.T) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
 }
+
+func TestSubscriptionService_Summary_SuccessWithoutFilters(t *testing.T) {
+	repo := &fakeSubscriptionRepository{
+		listFn: func(ctx context.Context, filter model.SubscriptionFilter) ([]model.Subscription, error) {
+			if filter.UserID != nil {
+				t.Fatalf("expected nil UserID filter")
+			}
+			if filter.ServiceName != nil {
+				t.Fatalf("expected nil ServiceName filter")
+			}
+			if filter.Limit != 1000 {
+				t.Fatalf("expected limit=1000, got %d", filter.Limit)
+			}
+			if filter.Offset != 0 {
+				t.Fatalf("expected offset=0, got %d", filter.Offset)
+			}
+
+			endDate := date(2025, time.September, 1)
+
+			return []model.Subscription{
+				{
+					ServiceName: "Yandex Plus",
+					Price:       400,
+					StartDate:   date(2025, time.July, 1),
+					EndDate:     &endDate,
+				},
+				{
+					ServiceName: "Netflix",
+					Price:       700,
+					StartDate:   date(2025, time.August, 1),
+					EndDate:     nil,
+				},
+			}, nil
+		},
+	}
+
+	svc := NewSubscriptionService(repo)
+
+	got, err := svc.Summary(context.Background(), "08-2025", "09-2025", nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	const want = 2200
+	if got != want {
+		t.Fatalf("expected total %d, got %d", want, got)
+	}
+}
+
+func TestSubscriptionService_Summary_SuccessWithUserIDFilter(t *testing.T) {
+	expectedUserID := uuid.New()
+
+	repo := &fakeSubscriptionRepository{
+		listFn: func(ctx context.Context, filter model.SubscriptionFilter) ([]model.Subscription, error) {
+			if filter.UserID == nil {
+				t.Fatal("expected UserID filter to be set")
+			}
+			if *filter.UserID != expectedUserID {
+				t.Fatalf("expected UserID %v, got %v", expectedUserID, *filter.UserID)
+			}
+			if filter.Limit != 1000 {
+				t.Fatalf("expected limit=1000, got %d", filter.Limit)
+			}
+			if filter.Offset != 0 {
+				t.Fatalf("expected offset=0, got %d", filter.Offset)
+			}
+
+			return []model.Subscription{}, nil
+		},
+	}
+
+	svc := NewSubscriptionService(repo)
+
+	userID := "  " + expectedUserID.String() + "  "
+	_, err := svc.Summary(context.Background(), "08-2025", "09-2025", &userID, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSubscriptionService_Summary_SuccessWithServiceNameFilter(t *testing.T) {
+	repo := &fakeSubscriptionRepository{
+		listFn: func(ctx context.Context, filter model.SubscriptionFilter) ([]model.Subscription, error) {
+			if filter.ServiceName == nil {
+				t.Fatal("expected ServiceName filter to be set")
+			}
+			if *filter.ServiceName != "Netflix" {
+				t.Fatalf("expected ServiceName Netflix, got %q", *filter.ServiceName)
+			}
+			if filter.Limit != 1000 {
+				t.Fatalf("expected limit=1000, got %d", filter.Limit)
+			}
+			if filter.Offset != 0 {
+				t.Fatalf("expected offset=0, got %d", filter.Offset)
+			}
+
+			return []model.Subscription{}, nil
+		},
+	}
+
+	svc := NewSubscriptionService(repo)
+
+	serviceName := "   Netflix   "
+	_, err := svc.Summary(context.Background(), "08-2025", "09-2025", nil, &serviceName)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSubscriptionService_Summary_InvalidFrom(t *testing.T) {
+	repo := &fakeSubscriptionRepository{}
+	svc := NewSubscriptionService(repo)
+
+	_, err := svc.Summary(context.Background(), "bad-date", "09-2025", nil, nil)
+	if !errors.Is(err, ErrInvalidFrom) {
+		t.Fatalf("expected ErrInvalidFrom, got %v", err)
+	}
+}
+
+func TestSubscriptionService_Summary_InvalidTo(t *testing.T) {
+	repo := &fakeSubscriptionRepository{}
+	svc := NewSubscriptionService(repo)
+
+	_, err := svc.Summary(context.Background(), "08-2025", "bad-date", nil, nil)
+	if !errors.Is(err, ErrInvalidTo) {
+		t.Fatalf("expected ErrInvalidTo, got %v", err)
+	}
+}
+
+func TestSubscriptionService_Summary_InvalidPeriod(t *testing.T) {
+	repo := &fakeSubscriptionRepository{}
+	svc := NewSubscriptionService(repo)
+
+	_, err := svc.Summary(context.Background(), "10-2025", "09-2025", nil, nil)
+	if !errors.Is(err, ErrInvalidPeriod) {
+		t.Fatalf("expected ErrInvalidPeriod, got %v", err)
+	}
+}
+
+func TestSubscriptionService_Summary_InvalidUserID(t *testing.T) {
+	repo := &fakeSubscriptionRepository{}
+	svc := NewSubscriptionService(repo)
+
+	userID := "not-a-uuid"
+	_, err := svc.Summary(context.Background(), "08-2025", "09-2025", &userID, nil)
+	if !errors.Is(err, ErrInvalidUserID) {
+		t.Fatalf("expected ErrInvalidUserID, got %v", err)
+	}
+}
+
+func TestSubscriptionService_Summary_EmptyServiceName(t *testing.T) {
+	repo := &fakeSubscriptionRepository{}
+	svc := NewSubscriptionService(repo)
+
+	serviceName := "   "
+	_, err := svc.Summary(context.Background(), "08-2025", "09-2025", nil, &serviceName)
+	if !errors.Is(err, ErrInvalidService) {
+		t.Fatalf("expected ErrInvalidService, got %v", err)
+	}
+}
+
+func date(year int, month time.Month, day int) time.Time {
+	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+}

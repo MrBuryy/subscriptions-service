@@ -229,3 +229,65 @@ func (s *SubscriptionService) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (s *SubscriptionService) Summary(
+	ctx context.Context,
+	from string,
+	to string,
+	userID *string,
+	serviceName *string,
+) (int, error) {
+	parsedFrom, err := ParseMonthYear(from)
+	if err != nil {
+		return 0, ErrInvalidFrom
+	}
+
+	parsedTo, err := ParseMonthYear(to)
+	if err != nil {
+		return 0, ErrInvalidTo
+	}
+
+	if parsedFrom.After(parsedTo) {
+		return 0, ErrInvalidPeriod
+	}
+
+	filter := model.SubscriptionFilter{
+		Limit:  1000,
+		Offset: 0,
+	}
+
+	if userID != nil {
+		trimmedUserID := strings.TrimSpace(*userID)
+		parsedUserID, err := uuid.Parse(trimmedUserID)
+		if err != nil {
+			return 0, ErrInvalidUserID
+		}
+		filter.UserID = &parsedUserID
+	}
+
+	if serviceName != nil {
+		trimmedServiceName := strings.TrimSpace(*serviceName)
+		if trimmedServiceName == "" {
+			return 0, ErrInvalidService
+		}
+		filter.ServiceName = &trimmedServiceName
+	}
+
+	subs, err := s.repo.List(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	total := 0
+	for _, sub := range subs {
+		months := CountMonthsInIntersection(
+			sub.StartDate,
+			sub.EndDate,
+			parsedFrom,
+			parsedTo,
+		)
+		total += months * sub.Price
+	}
+
+	return total, nil
+}

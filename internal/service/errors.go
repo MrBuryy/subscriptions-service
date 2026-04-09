@@ -11,4 +11,8 @@ var (
 	ErrInvalidEndDate   = errors.New("invalid end_date")
 	ErrInvalidOffset    = errors.New("invalid offset")
 	ErrNotFound         = errors.New("not found")
+
+	ErrInvalidFrom   = errors.New("invalid from")
+	ErrInvalidTo     = errors.New("invalid to")
+	ErrInvalidPeriod = errors.New("invalid period")
 )
