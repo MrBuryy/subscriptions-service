@@ -1,9 +1,5 @@
 # Subscriptions Service API
 
-Тестовое задание на позицию **Junior Golang Developer (Effective Mobile)**
-
----
-
 ## Описание
 
 REST-сервис для управления и агрегации данных об онлайн-подписках пользователей.
